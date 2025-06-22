@@ -4,6 +4,10 @@ import { ObjectId } from 'mongodb';
 
 const DATABASE_NAME = 'holiday-tool';
 
+// Simple in-memory cache for user data
+const userCache = new Map<string, { user: User; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export async function getDb() {
   const client = await clientPromise;
   return client.db(DATABASE_NAME);
@@ -30,9 +34,23 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 export async function findUserById(id: string): Promise<User | null> {
+  // Check cache first
+  const cached = userCache.get(id);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.user;
+  }
+
   const db = await getDb();
   const user = await db.collection('users').findOne({ _id: new ObjectId(id) }) as User & { _id: ObjectId } | null;
-  return user ? { ...user, _id: user._id.toString() } : null;
+  
+  if (user) {
+    const userData = { ...user, _id: user._id.toString() };
+    // Cache the user data
+    userCache.set(id, { user: userData, timestamp: Date.now() });
+    return userData;
+  }
+  
+  return null;
 }
 
 export async function updateUser(id: string, updateData: Partial<User>): Promise<void> {

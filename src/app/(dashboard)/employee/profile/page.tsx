@@ -11,19 +11,19 @@ import Image from "next/image";
 const EmployeeProfilePage = async () => {
   const user = await getCurrentUser();
 
-  if (!user) {
+  if (!user || user.role !== "EMPLOYEE") {
     redirect("/login");
   }
 
-  const [dbUser, company, companyHolidays] = await Promise.all([
-    findUserById(user.userId),
-    findUserById(user.userId).then(user => user?.companyId ? getCompanyById(user.companyId) : null),
-    findUserById(user.userId).then(user => user?.companyId ? getCompanyHolidays(user.companyId) : [])
-  ]);
-
+  // Fetch user data once and reuse it
+  const dbUser = await findUserById(user.userId);
   if (!dbUser) {
     redirect("/login");
   }
+
+  // Only fetch company data if user has a company
+  const company = dbUser.companyId ? await getCompanyById(dbUser.companyId) : null;
+  const companyHolidays = dbUser.companyId ? await getCompanyHolidays(dbUser.companyId) : [];
 
   const workingDays = company?.workingDays || [];
 

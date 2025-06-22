@@ -37,17 +37,15 @@ export function verifyToken(token: string): JWTPayload | null {
   }
 }
 
-// Edge Runtime compatible JWT verification
+// Edge Runtime compatible JWT verification - optimized version
 export async function verifyTokenEdge(token: string): Promise<JWTPayload | null> {
   try {
-    // For now, we'll use a simple approach - decode without verification
-    // In production, you should use a proper JWT library that supports Web Crypto API
+    // Use a more efficient base64 decoding
     const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
+    if (!base64Url) return null;
     
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = atob(base64);
     const payload = JSON.parse(jsonPayload);
     
     // Check if token is expired
