@@ -10,11 +10,8 @@ import {
   createCode,
   findCodesByCompanyId,
   findTimeOffRequestById,
-  updateTimeOffRequest,
-  findTimeOffRequestsByCompanyId,
-  findUsersByCompanyId
+  updateTimeOffRequest
 } from '@/lib/db';
-import { RequestStatus } from '@/lib/types';
 import { revalidatePath } from "next/cache";
 
 export async function updateCompanyProfile({
@@ -353,7 +350,7 @@ export async function updateTimeOffRequestStatus({
       );
     }
 
-    const updatedRequest = await updateTimeOffRequest(requestId, {
+    await updateTimeOffRequest(requestId, {
       status,
       notes,
       managerId: dbUser._id,

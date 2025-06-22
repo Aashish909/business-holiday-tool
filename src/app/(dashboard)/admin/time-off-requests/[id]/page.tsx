@@ -9,9 +9,9 @@ import ApproveRejectButtons from "@/components/ApproveRejectButtons";
 const RequestDetailsPage = async ({
   params,
 }: {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }) => {
   const user = await getCurrentUser();
 
@@ -19,7 +19,7 @@ const RequestDetailsPage = async ({
     redirect("/login");
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   const request = await getDetailedRequestById(id);
 

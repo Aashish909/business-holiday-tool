@@ -195,7 +195,7 @@ export async function createTimeOffRequest(
 
   const newRequest = (await db
     .collection("time_off_requests")
-    .findOne({ _id: result.insertedId })) as any;
+    .findOne({ _id: result.insertedId })) as (TimeOffRequest & { _id: ObjectId });
 
   return {
     ...newRequest,
@@ -264,7 +264,7 @@ export async function updateTimeOffRequest(
   updateData: Partial<Omit<TimeOffRequest, "_id" | "companyId" | "userId">>
 ): Promise<TimeOffRequest | null> {
   const db = await getDb();
-  const updateFields: { [key: string]: any } = { ...updateData };
+  const updateFields: Record<string, unknown> = { ...updateData };
 
   if (updateData.managerId) {
     updateFields.managerId = new ObjectId(updateData.managerId as string);
@@ -398,22 +398,22 @@ export async function getDetailedRequestsByCompanyId(companyId: string) {
     ])
     .toArray();
 
-  return requests.map((r: any) => ({
+  return requests.map((r: Record<string, unknown>) => ({
     ...r,
-    _id: r._id.toString(),
-    userId: r.userId.toString(),
-    companyId: r.companyId.toString(),
-    managerId: r.managerId ? r.managerId.toString() : undefined,
+    _id: (r._id as ObjectId).toString(),
+    userId: (r.userId as ObjectId).toString(),
+    companyId: (r.companyId as ObjectId).toString(),
+    managerId: r.managerId ? (r.managerId as ObjectId).toString() : undefined,
     employee: {
-      ...r.employee,
-      _id: r.employee._id.toString(),
-      companyId: r.employee.companyId.toString(),
+      ...(r.employee as Record<string, unknown>),
+      _id: ((r.employee as Record<string, unknown>)._id as ObjectId).toString(),
+      companyId: ((r.employee as Record<string, unknown>).companyId as ObjectId).toString(),
     },
     manager: r.manager
       ? {
-          ...r.manager,
-          _id: r.manager._id.toString(),
-          companyId: r.manager.companyId.toString(),
+          ...(r.manager as Record<string, unknown>),
+          _id: ((r.manager as Record<string, unknown>)._id as ObjectId).toString(),
+          companyId: ((r.manager as Record<string, unknown>).companyId as ObjectId).toString(),
         }
       : undefined,
   }));
@@ -451,25 +451,29 @@ export async function getDetailedRequestById(requestId: string) {
     ])
     .toArray();
 
-  const request = requests[0] as any;
+  const request = requests[0] as Record<string, unknown>;
   if (!request) return null;
 
   return {
     ...request,
-    _id: request._id.toString(),
-    userId: request.userId.toString(),
-    companyId: request.companyId.toString(),
-    managerId: request.managerId ? request.managerId.toString() : undefined,
+    _id: (request._id as ObjectId).toString(),
+    userId: (request.userId as ObjectId).toString(),
+    companyId: (request.companyId as ObjectId).toString(),
+    managerId: request.managerId ? (request.managerId as ObjectId).toString() : undefined,
+    startDate: new Date(request.startDate as string),
+    endDate: new Date(request.endDate as string),
+    createdAt: new Date(request.createdAt as string),
+    updatedAt: new Date(request.updatedAt as string),
     employee: {
-      ...request.employee,
-      _id: request.employee._id.toString(),
-      companyId: request.employee.companyId.toString(),
+      ...(request.employee as Record<string, unknown>),
+      _id: ((request.employee as Record<string, unknown>)._id as ObjectId).toString(),
+      companyId: ((request.employee as Record<string, unknown>).companyId as ObjectId).toString(),
     },
     manager: request.manager
       ? {
-          ...request.manager,
-          _id: request.manager._id.toString(),
-          companyId: request.manager.companyId.toString(),
+          ...(request.manager as Record<string, unknown>),
+          _id: ((request.manager as Record<string, unknown>)._id as ObjectId).toString(),
+          companyId: ((request.manager as Record<string, unknown>).companyId as ObjectId).toString(),
         }
       : undefined,
   };
@@ -497,8 +501,10 @@ export async function getInvitationCodesByCompanyId(companyId: string) {
     .toArray();
 
   return codes.map((code) => ({
-    ...code,
     _id: code._id.toString(),
+    code: code.code,
+    used: code.used,
+    createdAt: code.createdAt instanceof Date ? code.createdAt.toISOString() : new Date(code.createdAt).toISOString(),
     companyId: code.companyId.toString(),
   }));
 }

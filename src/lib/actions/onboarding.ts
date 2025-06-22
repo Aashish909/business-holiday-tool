@@ -1,5 +1,5 @@
 "use server";
-import { createUser, createCompany, findCodeByValue, updateCode, updateUser, findUserById } from '@/lib/db';
+import { createCompany, findCodeByValue, updateCode, updateUser, findUserById } from '@/lib/db';
 import { generateToken } from '@/lib/auth';
 import { UserRole } from '@/lib/types';
 import { revalidatePath } from "next/cache";

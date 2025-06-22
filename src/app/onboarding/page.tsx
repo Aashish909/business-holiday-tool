@@ -4,9 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import OnboardingForm from "@/components/OnboardingForm";
 
+interface UserData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  onboardingCompleted: boolean;
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,9 +70,6 @@ export default function OnboardingPage() {
     <div className="container mx-auto py-8">
       <div className="max-w-2xl mx-auto">
         <OnboardingForm
-          userEmail={userData.email}
-          firstName={userData.firstName}
-          lastName={userData.lastName}
           userId={userData.id}
         />
       </div>

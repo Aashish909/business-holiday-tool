@@ -23,12 +23,19 @@ import {
 } from "./ui/card";
 import { generateInvitationCode } from "@/lib/actions/admin-actions";
 
+interface InvitationCode {
+  _id: string;
+  code: string;
+  used: boolean;
+  createdAt: string;
+}
+
 interface InvitationCodesProps {
-  initialCodes: any[];
+  initialCodes: InvitationCode[];
 }
 
 const InvitationCodes = ({ initialCodes }: InvitationCodesProps) => {
-  const [codes, setCodes] = useState<any[]>(initialCodes);
+  const [codes, setCodes] = useState<InvitationCode[]>(initialCodes);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +54,13 @@ const InvitationCodes = ({ initialCodes }: InvitationCodesProps) => {
 
     try {
       const newCode = await generateInvitationCode();
-      setCodes((prev) => [newCode, ...prev]);
+      const convertedCode: InvitationCode = {
+        _id: newCode._id,
+        code: newCode.code,
+        used: newCode.used,
+        createdAt: newCode.createdAt.toISOString(),
+      };
+      setCodes((prev) => [convertedCode, ...prev]);
       toast.success("New code generated successfully");
     } catch (error) {
       console.error(error);
