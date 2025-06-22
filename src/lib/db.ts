@@ -454,26 +454,47 @@ export async function getDetailedRequestById(requestId: string) {
   const request = requests[0] as Record<string, unknown>;
   if (!request) return null;
 
+  const employee = request.employee as Record<string, unknown>;
+  const manager = request.manager as Record<string, unknown> | undefined;
+
   return {
-    ...request,
     _id: (request._id as ObjectId).toString(),
     userId: (request.userId as ObjectId).toString(),
     companyId: (request.companyId as ObjectId).toString(),
     managerId: request.managerId ? (request.managerId as ObjectId).toString() : undefined,
+    type: request.type as string,
     startDate: new Date(request.startDate as string),
     endDate: new Date(request.endDate as string),
+    reason: request.reason as string,
+    status: request.status as "PENDING" | "APPROVED" | "REJECTED",
+    workingDaysCount: request.workingDaysCount as number,
+    notes: request.notes as string | undefined,
     createdAt: new Date(request.createdAt as string),
     updatedAt: new Date(request.updatedAt as string),
     employee: {
-      ...(request.employee as Record<string, unknown>),
-      _id: ((request.employee as Record<string, unknown>)._id as ObjectId).toString(),
-      companyId: ((request.employee as Record<string, unknown>).companyId as ObjectId).toString(),
+      _id: (employee._id as ObjectId).toString(),
+      email: employee.email as string,
+      firstName: employee.firstName as string,
+      lastName: employee.lastName as string,
+      role: employee.role as "ADMIN" | "EMPLOYEE",
+      companyId: (employee.companyId as ObjectId).toString(),
+      availableDays: employee.availableDays as number,
+      department: employee.department as string | undefined,
+      createdAt: new Date(employee.createdAt as string),
+      updatedAt: new Date(employee.updatedAt as string),
     },
-    manager: request.manager
+    manager: manager
       ? {
-          ...(request.manager as Record<string, unknown>),
-          _id: ((request.manager as Record<string, unknown>)._id as ObjectId).toString(),
-          companyId: ((request.manager as Record<string, unknown>).companyId as ObjectId).toString(),
+          _id: (manager._id as ObjectId).toString(),
+          email: manager.email as string,
+          firstName: manager.firstName as string,
+          lastName: manager.lastName as string,
+          role: manager.role as "ADMIN" | "EMPLOYEE",
+          companyId: (manager.companyId as ObjectId).toString(),
+          availableDays: manager.availableDays as number,
+          department: manager.department as string | undefined,
+          createdAt: new Date(manager.createdAt as string),
+          updatedAt: new Date(manager.updatedAt as string),
         }
       : undefined,
   };

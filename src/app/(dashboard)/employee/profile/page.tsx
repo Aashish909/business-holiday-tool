@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, Building, User, Mail, MapPin, Clock } from "lucide-react";
+import Image from "next/image";
 
 const EmployeeProfilePage = async () => {
   const user = await getCurrentUser();
@@ -95,7 +96,7 @@ const EmployeeProfilePage = async () => {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                     {company.logo ? (
-                      <img src={company.logo} alt="Company Logo" className="w-8 h-8 rounded" />
+                      <Image src={company.logo} alt="Company Logo" width={32} height={32} className="w-8 h-8 rounded" />
                     ) : (
                       <Building className="w-6 h-6 text-gray-500" />
                     )}
