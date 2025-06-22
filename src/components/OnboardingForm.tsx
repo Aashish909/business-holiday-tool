@@ -1,33 +1,17 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useRouter } from "next/navigation";
-import { createAdmin, createEmployee } from "@/lib/actions/onboarding";
 import { toast } from "sonner";
+import { createAdmin, createEmployee } from "@/lib/actions/onboarding";
 
 const formSchema = z.object({
   accountType: z.enum(["employee", "admin"]),
@@ -59,28 +43,21 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface OnboardingFormProps {
-  userEmail: string;
-  firstName: string;
-  lastName: string;
   userId: string;
 }
 
 const OnboardingForm = ({
-  userEmail,
-  firstName,
-  lastName,
   userId,
 }: OnboardingFormProps) => {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       accountType: "employee",
-      department: "",
       invitationCode: "",
+      department: "",
       companyName: "",
       companyWebsite: "",
       companyLogo: "",
@@ -91,7 +68,7 @@ const OnboardingForm = ({
 
   const handleSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    setError(null);
+    setError("");
 
     let response;
     try {
@@ -139,7 +116,7 @@ const OnboardingForm = ({
           Complete your account setup
         </CardTitle>
         <CardDescription>
-          Welcome to NextLeave! Let's get you onboarded.
+          Welcome to NextLeave! Let&apos;s get you onboarded.
         </CardDescription>
       </CardHeader>
       <CardContent>

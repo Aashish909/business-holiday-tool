@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
-    JWT_SEC: process.env.JWT_SEC ? 'Set' : 'Not set',
-    JWT_SEC_LENGTH: process.env.JWT_SEC ? process.env.JWT_SEC.length : 0,
-    NODE_ENV: process.env.NODE_ENV,
-    allEnvVars: Object.keys(process.env).filter(key => key.includes('JWT'))
+    message: 'Environment test endpoint',
+    env: {
+      JWT_SEC: process.env.JWT_SEC ? 'Set' : 'Not set',
+      MONGODB_URI: process.env.MONGODB_URI ? 'Set' : 'Not set',
+      NODE_ENV: process.env.NODE_ENV,
+    }
   });
 } 
