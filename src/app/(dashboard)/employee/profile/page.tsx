@@ -1,30 +1,96 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
-import { findUserById, getCompanyById, getCompanyHolidays } from "@/lib/db";
-import EmployeeProfileForm from "@/components/EmployeeProfileForm";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, Building, User, Mail, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
+import EmployeeProfileForm from "@/components/EmployeeProfileForm";
+import { getCurrentUserClient } from "@/lib/auth-client";
 
-const EmployeeProfilePage = async () => {
-  const user = await getCurrentUser();
+interface UserData {
+  _id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: "ADMIN" | "EMPLOYEE";
+  companyId: string;
+  availableDays: number;
+  department?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-  if (!user || user.role !== "EMPLOYEE") {
-    redirect("/login");
+interface CompanyData {
+  _id: string;
+  name: string;
+  website?: string;
+  logo?: string;
+  workingDays: string[];
+}
+
+interface HolidayData {
+  _id: string;
+  name: string;
+  date: Date;
+  isRecurring: boolean;
+}
+
+interface ProfileData {
+  user: UserData;
+  company: CompanyData | null;
+  companyHolidays: HolidayData[];
+}
+
+const EmployeeProfilePage = () => {
+  const router = useRouter();
+  const [data, setData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const currentUser = await getCurrentUserClient();
+        if (!currentUser || currentUser.role !== "EMPLOYEE") {
+          router.push("/login");
+          return;
+        }
+
+        const response = await fetch('/api/profile/employee');
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
+
+        const profileData = await response.json();
+        setData(profileData);
+      } catch (error) {
+        console.error("Error loading profile data:", error);
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="space-y-8 mt-12">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    );
   }
 
-  // Fetch user data once and reuse it
-  const dbUser = await findUserById(user.userId);
-  if (!dbUser) {
-    redirect("/login");
+  if (!data) {
+    return null;
   }
 
-  // Only fetch company data if user has a company
-  const company = dbUser.companyId ? await getCompanyById(dbUser.companyId) : null;
-  const companyHolidays = dbUser.companyId ? await getCompanyHolidays(dbUser.companyId) : [];
-
+  const { user, company, companyHolidays } = data;
   const workingDays = company?.workingDays || [];
 
   return (
@@ -46,7 +112,7 @@ const EmployeeProfilePage = async () => {
               <CardDescription>Your personal details and contact information</CardDescription>
             </CardHeader>
             <CardContent>
-              <EmployeeProfileForm initialUser={dbUser} />
+              <EmployeeProfileForm initialUser={user} />
             </CardContent>
           </Card>
 
@@ -59,20 +125,20 @@ const EmployeeProfilePage = async () => {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-lg bg-blue-50 p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{dbUser.availableDays}</div>
+                  <div className="text-2xl font-bold text-blue-600">{user.availableDays}</div>
                   <div className="text-sm text-gray-600">Available Days</div>
                 </div>
                 <div className="rounded-lg bg-green-50 p-4 text-center">
-                  <div className="text-2xl font-bold text-green-600">{dbUser.role}</div>
+                  <div className="text-2xl font-bold text-green-600">{user.role}</div>
                   <div className="text-sm text-gray-600">Role</div>
                 </div>
                 <div className="rounded-lg bg-purple-50 p-4 text-center">
-                  <div className="text-2xl font-bold text-purple-600">{dbUser.department || "N/A"}</div>
+                  <div className="text-2xl font-bold text-purple-600">{user.department || "N/A"}</div>
                   <div className="text-sm text-gray-600">Department</div>
                 </div>
                 <div className="rounded-lg bg-orange-50 p-4 text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {format(new Date(dbUser.createdAt), "MMM yyyy")}
+                    {format(new Date(user.createdAt), "MMM yyyy")}
                   </div>
                   <div className="text-sm text-gray-600">Joined</div>
                 </div>
@@ -96,7 +162,14 @@ const EmployeeProfilePage = async () => {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                     {company.logo ? (
-                      <Image src={company.logo} alt="Company Logo" width={32} height={32} className="w-8 h-8 rounded" />
+                      <Image 
+                        src={company.logo} 
+                        alt="Company Logo" 
+                        width={32} 
+                        height={32} 
+                        className="w-8 h-8 rounded object-cover"
+                        unoptimized={company.logo.startsWith('http')}
+                      />
                     ) : (
                       <Building className="w-6 h-6 text-gray-500" />
                     )}
@@ -120,18 +193,18 @@ const EmployeeProfilePage = async () => {
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-gray-500" />
                     <span className="text-gray-600">Email:</span>
-                    <span className="font-medium">{dbUser.email}</span>
+                    <span className="font-medium">{user.email}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <User className="h-4 w-4 text-gray-500" />
                     <span className="text-gray-600">Role:</span>
-                    <Badge variant="outline" className="capitalize">{dbUser.role.toLowerCase()}</Badge>
+                    <Badge variant="outline" className="capitalize">{user.role.toLowerCase()}</Badge>
                   </div>
-                  {dbUser.department && (
+                  {user.department && (
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-gray-500" />
                       <span className="text-gray-600">Department:</span>
-                      <span className="font-medium">{dbUser.department}</span>
+                      <span className="font-medium">{user.department}</span>
                     </div>
                   )}
                 </div>

@@ -1,12 +1,9 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
-import {
-  getCompanyById,
-  countPendingRequests,
-  countApprovedRequests,
-  countEmployees,
-} from "@/lib/db";
+import { getCurrentUserClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,47 +13,74 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const AdminDashboardPage = async () => {
-  const user = await getCurrentUser();
+interface DashboardData {
+  pendingRequests: number;
+  approvedRequests: number;
+  employeeCount: number;
+  companyName: string;
+}
 
-  if (!user || user.role !== "ADMIN" || !user.companyId) {
+const AdminDashboardPage = () => {
+  const router = useRouter();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const user = await getCurrentUserClient();
+
+        if (!user || user.role !== "ADMIN" || !user.companyId) {
+          router.push("/login");
+          return;
+        }
+
+        const response = await fetch('/api/dashboard/admin');
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+
+        const dashboardData = await response.json();
+        setData(dashboardData);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [router]);
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p>You are not authorized to view this page.</p>
+      <div className="space-y-8 mt-12">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
       </div>
     );
   }
 
-  const [company, pendingRequests, approvedRequests, employeeCount] =
-    await Promise.all([
-      getCompanyById(user.companyId),
-      countPendingRequests(user.companyId),
-      countApprovedRequests(user.companyId),
-      countEmployees(user.companyId),
-    ]);
-
-  if (!company) {
-    // This case should ideally not happen if the user has a companyId
-    // but it's good practice to handle it.
-    redirect("/onboarding");
+  if (!data) {
+    return null;
   }
 
-  const companyName = company.name;
-
-  const data = [
-    { title: "Pending Requests", data: pendingRequests },
-    { title: "Approved Requests", data: approvedRequests },
-    { title: "Employee Count", data: employeeCount },
+  const statsData = [
+    { title: "Pending Requests", data: data.pendingRequests },
+    { title: "Approved Requests", data: data.approvedRequests },
+    { title: "Employee Count", data: data.employeeCount },
   ];
 
   return (
     <div className="space-y-8 mt-12">
       <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold">{companyName} Dashboard</h1>
+        <h1 className="text-3xl font-bold">{data.companyName} Dashboard</h1>
         <p className="text-gray-500">Manage your company and employees</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {data.map((item) => (
+        {statsData.map((item) => (
           <Card key={item.title}>
             <CardContent className="p-6">
               <p className="text-sm text-gray-500">{item.title}</p>

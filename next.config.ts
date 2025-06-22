@@ -11,8 +11,17 @@ const nextConfig: NextConfig = {
   
   // Optimize images
   images: {
-    domains: ['localhost'],
-    formats: ['image/webp', 'image/avif'],
+    domains: ['localhost', 'example.com', 'via.placeholder.com', 'images.unsplash.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
+    ],
   },
   
   // Optimize bundle size
