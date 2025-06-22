@@ -61,6 +61,19 @@ const EmployeeDashboardPage = async () => {
         </Card>
         <Card>
           <CardHeader>
+            <CardTitle>Profile & Company</CardTitle>
+            <CardDescription>View your profile and company information</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <Button asChild variant={"outline"}>
+                <Link href="/employee/profile">My Profile</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
             <CardTitle>Quick overview</CardTitle>
             <CardDescription>Your time off at a glance.</CardDescription>
           </CardHeader>

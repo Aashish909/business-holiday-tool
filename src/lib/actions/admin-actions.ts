@@ -131,6 +131,8 @@ export async function addCompanyHoliday({
   }
 
   try {
+    console.log("Adding company holiday:", { name, date, isRecurring, userId: user.userId });
+    
     const dbUser = await findUserById(user.userId);
     if (!dbUser) {
       throw new Error("User not found in database");
@@ -140,6 +142,8 @@ export async function addCompanyHoliday({
       throw new Error("Unauthorized");
     }
 
+    console.log("Creating holiday with companyId:", dbUser.companyId);
+
     await createCompanyHoliday({
       name,
       date,
@@ -147,13 +151,15 @@ export async function addCompanyHoliday({
       companyId: dbUser.companyId,
     });
 
+    console.log("Holiday created successfully");
+
     revalidatePath("/admin/company-settings/holidays");
 
     return {
       success: true,
     };
   } catch (error) {
-    console.error(error);
+    console.error("Error in addCompanyHoliday:", error);
     throw new Error("Failed to add company holiday");
   }
 }
@@ -175,6 +181,8 @@ export async function updateCompanyHoliday({
   }
 
   try {
+    console.log("Updating company holiday:", { id, name, date, isRecurring, userId: user.userId });
+    
     const dbUser = await findUserById(user.userId);
     if (!dbUser) {
       throw new Error("User not found in database");
@@ -184,11 +192,15 @@ export async function updateCompanyHoliday({
       throw new Error("Unauthorized");
     }
 
+    console.log("Updating holiday with ID:", id);
+
     await updateHoliday(id, {
       name,
       date,
       isRecurring,
     });
+
+    console.log("Holiday updated successfully");
 
     revalidatePath("/admin/company-settings/holidays");
 
@@ -196,7 +208,7 @@ export async function updateCompanyHoliday({
       success: true,
     };
   } catch (error) {
-    console.error(error);
+    console.error("Error in updateCompanyHoliday:", error);
     throw new Error("Failed to update company holiday");
   }
 }
@@ -214,6 +226,8 @@ export async function updateEmployeeAllowance({
   }
 
   try {
+    console.log("Updating employee allowance:", { employeeId, availableDays, userId: user.userId });
+    
     const dbUser = await findUserById(user.userId);
     if (!dbUser) {
       throw new Error("User not found in database");
@@ -223,18 +237,36 @@ export async function updateEmployeeAllowance({
       throw new Error("Unauthorized");
     }
 
+    console.log("Admin user found:", { adminId: dbUser._id, adminCompanyId: dbUser.companyId });
+
     const employee = await findUserById(employeeId);
     if (!employee) {
       throw new Error("Employee not found");
     }
 
-    if (employee.companyId !== dbUser.companyId) {
+    console.log("Employee found:", { employeeId: employee._id, employeeCompanyId: employee.companyId });
+
+    // Convert both company IDs to strings for comparison
+    const adminCompanyIdStr = dbUser.companyId?.toString();
+    const employeeCompanyIdStr = employee.companyId?.toString();
+
+    console.log("Company ID comparison:", { 
+      adminCompanyId: adminCompanyIdStr, 
+      employeeCompanyId: employeeCompanyIdStr,
+      areEqual: adminCompanyIdStr === employeeCompanyIdStr 
+    });
+
+    if (adminCompanyIdStr !== employeeCompanyIdStr) {
       throw new Error("You can only update employees in your company");
     }
+
+    console.log("Updating employee with new allowance:", availableDays);
 
     await updateUser(employeeId, {
       availableDays,
     });
+
+    console.log("Employee allowance updated successfully");
 
     revalidatePath("/admin/employees");
 
@@ -242,7 +274,7 @@ export async function updateEmployeeAllowance({
       success: true,
     };
   } catch (error) {
-    console.error(error);
+    console.error("Error in updateEmployeeAllowance:", error);
     throw new Error("Failed to update employee allowance");
   }
 }

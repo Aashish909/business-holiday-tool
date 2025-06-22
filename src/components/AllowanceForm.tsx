@@ -33,13 +33,22 @@ export default function AllowanceForm({
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
-      // TODO: Implement allowance update
+    // Validate allowance value
+    if (isNaN(allowance) || allowance < 0) {
+      toast.error("Please enter a valid number of days");
+      setIsSubmitting(false);
+      return;
+    }
 
+    console.log("Submitting allowance update:", { employeeId, allowance });
+
+    try {
       const result = await updateEmployeeAllowance({
         employeeId,
         availableDays: allowance,
       });
+
+      console.log("Allowance update result:", result);
 
       if (result.success) {
         toast.success("Allowance updated successfully");
@@ -77,7 +86,10 @@ export default function AllowanceForm({
               type="number"
               min={0}
               value={allowance}
-              onChange={(e) => setAllowance(parseInt(e.target.value))}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 0;
+                setAllowance(value);
+              }}
               required
             />
           </div>

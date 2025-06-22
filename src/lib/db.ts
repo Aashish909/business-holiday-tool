@@ -37,10 +37,22 @@ export async function findUserById(id: string): Promise<User | null> {
 
 export async function updateUser(id: string, updateData: Partial<User>): Promise<void> {
   const db = await getDb();
-  await db.collection('users').updateOne(
+  console.log("Updating user in database:", { id, updateData });
+  
+  const result = await db.collection('users').updateOne(
     { _id: new ObjectId(id) },
     { $set: { ...updateData, updatedAt: new Date() } }
   );
+  
+  console.log("User update result:", result);
+  
+  if (result.matchedCount === 0) {
+    console.warn("No user found with ID:", id);
+  }
+  
+  if (result.modifiedCount === 0) {
+    console.warn("No changes made to user with ID:", id);
+  }
 }
 
 // Company operations
@@ -71,12 +83,18 @@ export async function createCompanyHoliday(holidayData: Omit<CompanyHoliday, '_i
   const now = new Date();
   const holiday = {
     ...holidayData,
+    companyId: new ObjectId(holidayData.companyId),
     createdAt: now,
     updatedAt: now,
   };
   
+  console.log("Inserting holiday into database:", holiday);
+  
   const result = await db.collection('companyHolidays').insertOne(holiday);
-  return { ...holiday, _id: result.insertedId.toString() };
+  
+  console.log("Holiday inserted with ID:", result.insertedId);
+  
+  return { ...holiday, _id: result.insertedId.toString(), companyId: holidayData.companyId };
 }
 
 export async function findCompanyHolidaysByCompanyId(companyId: string): Promise<CompanyHoliday[]> {
@@ -93,10 +111,22 @@ export async function findCompanyHolidayById(id: string): Promise<CompanyHoliday
 
 export async function updateCompanyHoliday(id: string, updateData: Partial<CompanyHoliday>): Promise<void> {
   const db = await getDb();
-  await db.collection('companyHolidays').updateOne(
+  console.log("Updating holiday in database:", { id, updateData });
+  
+  const result = await db.collection('companyHolidays').updateOne(
     { _id: new ObjectId(id) },
     { $set: { ...updateData, updatedAt: new Date() } }
   );
+  
+  console.log("Update result:", result);
+  
+  if (result.matchedCount === 0) {
+    console.warn("No holiday found with ID:", id);
+  }
+  
+  if (result.modifiedCount === 0) {
+    console.warn("No changes made to holiday with ID:", id);
+  }
 }
 
 export async function deleteCompanyHoliday(id: string): Promise<void> {
@@ -312,13 +342,20 @@ export async function getRequestsByUserId(userId: string) {
 
 export async function getCompanyHolidays(companyId: string): Promise<CompanyHoliday[]> {
   const db = await getDb();
-  const holidaysFromDb = await db.collection("company_holidays").find({ companyId: new ObjectId(companyId) }).toArray();
+  console.log("Fetching holidays for companyId:", companyId);
+  
+  const holidaysFromDb = await db.collection("companyHolidays").find({ companyId: new ObjectId(companyId) }).toArray();
+  
+  console.log("Raw holidays from database:", holidaysFromDb);
   
   const holidays: CompanyHoliday[] = holidaysFromDb.map(holiday => ({
     ...holiday,
-    _id: holiday._id.toHexString(),
-    companyId: holiday.companyId.toHexString(),
+    _id: holiday._id.toString(),
+    companyId: holiday.companyId.toString(),
+    date: new Date(holiday.date),
   })) as unknown as CompanyHoliday[];
+
+  console.log("Processed holidays:", holidays);
 
   return holidays;
 }
@@ -438,13 +475,17 @@ export async function getDetailedRequestById(requestId: string) {
   };
 }
 
-export async function getEmployeesByCompanyId(companyId: string) {
+export async function getEmployeesByCompanyId(companyId: string): Promise<User[]> {
   const db = await getDb();
   const users = await db
     .collection("users")
-    .find({ companyId: companyId })
+    .find({ companyId: new ObjectId(companyId) })
     .toArray();
-  return users.map((user) => ({ ...user, _id: user._id.toString(), companyId: user.companyId ? user.companyId.toString() : undefined }));
+  return users.map((user) => ({ 
+    ...user, 
+    _id: user._id.toString(), 
+    companyId: user.companyId ? user.companyId.toString() : undefined 
+  })) as User[];
 }
 
 export async function getInvitationCodesByCompanyId(companyId: string) {

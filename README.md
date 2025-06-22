@@ -1,4 +1,4 @@
-# TimeOffer - Holiday Management Tool
+# NextLeave - Holiday Management Tool
 
 A modern holiday and time-off management application built with Next.js, MongoDB, JWT authentication, and Cloudinary for image uploads.
 

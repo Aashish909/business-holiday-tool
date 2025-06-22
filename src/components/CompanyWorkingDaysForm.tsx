@@ -49,7 +49,7 @@ const CompanyWorkingDaysForm = ({
 
 
   const [selectedDays, setSelectedDays] =
-    useState<string[]>(initialWorkingDays);
+    useState<string[]>(initialWorkingDays || []);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -48,7 +48,7 @@ const EmployeesPage = async () => {
                   </TableHeader>
                   <TableBody>
                     {employees.map((employee) => (
-                      <TableRow key={employee._id.toHexString()}>
+                      <TableRow key={employee._id}>
                         <TableCell>
                           {employee.firstName} {employee.lastName}
                         </TableCell>

@@ -44,7 +44,6 @@ import {
   TrashIcon,
   PlusIcon,
   ArrowLeftIcon,
-  Plus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -65,7 +64,7 @@ const holidayFormSchema = z.object({
 type HolidayFormValues = z.infer<typeof holidayFormSchema>;
 
 interface CompanyHoliday {
-  id: string;
+  _id: string;
   name: string;
   date: Date;
   isRecurring: boolean;
@@ -115,21 +114,38 @@ const CompanyHolidaysForm = ({
         setHolidays(
           initialHolidays?.map(
             (h: {
-              id: string;
+              _id: string;
               name: string;
               date: string | number | Date;
               isRecurring: boolean;
-            }) => ({
-              id: h.id,
-              name: h.name,
-              date: new Date(h.date),
-              isRecurring: h.isRecurring,
-            })
-          )
+            }) => {
+              // Safely convert date with error handling
+              let convertedDate: Date;
+              try {
+                convertedDate = new Date(h.date);
+                // Check if the date is valid
+                if (isNaN(convertedDate.getTime())) {
+                  console.warn(`Invalid date for holiday ${h.name}:`, h.date);
+                  convertedDate = new Date(); // Fallback to current date
+                }
+              } catch (error) {
+                console.warn(`Error converting date for holiday ${h.name}:`, error);
+                convertedDate = new Date(); // Fallback to current date
+              }
+              
+              return {
+                _id: h._id,
+                name: h.name,
+                date: convertedDate,
+                isRecurring: h.isRecurring,
+              };
+            }
+          ) || []
         );
       } catch (error) {
         console.error("Error fetching holidays:", error);
         toast.error("Failed to fetch holidays");
+        setHolidays([]); // Set empty array as fallback
       } finally {
         setIsLoading(false);
       }
@@ -146,23 +162,34 @@ const CompanyHolidaysForm = ({
 
   const handleAddHoliday = async (data: HolidayFormValues) => {
     setIsSubmitting(true);
+    setError(null); // Clear any previous errors
 
     try {
-      const newHoliday = await addCompanyHoliday({
+      const result = await addCompanyHoliday({
         name: data.name,
         date: new Date(data.date),
         isRecurring: data.isRecurring || false,
       });
 
-      setHolidays([...holidays, newHoliday]);
-      addForm.reset();
-      setIsAddDialogOpen(false);
-
-      toast.success("Holiday added successfully");
+      if (result.success) {
+        // Create a new holiday object with a temporary ID for immediate UI update
+        const newHoliday: CompanyHoliday = {
+          _id: `temp-${Date.now()}`, // Temporary ID
+          name: data.name,
+          date: new Date(data.date),
+          isRecurring: data.isRecurring || false,
+        };
+        
+        setHolidays(prev => [...prev, newHoliday]);
+        addForm.reset();
+        setIsAddDialogOpen(false);
+        toast.success("Holiday added successfully");
+      }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      setError(errorMessage);
       toast.error("Failed to add holiday");
-      // handle error
+      console.error("Add holiday error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -172,29 +199,41 @@ const CompanyHolidaysForm = ({
     if (!selectedHoliday) return;
     setIsSubmitting(true);
 
+    console.log("Editing holiday:", { selectedHoliday, formData: data });
+
     try {
-      const updatedHoliday = await updateCompanyHoliday({
-        id: selectedHoliday.id,
+      const result = await updateCompanyHoliday({
+        id: selectedHoliday._id,
         name: data.name,
         date: new Date(data.date),
         isRecurring: data.isRecurring || false,
-      }); // call server action
+      });
 
-      setHolidays(
-        holidays.map((h) =>
-          h.id === selectedHoliday.id
-            ? { ...updatedHoliday, date: new Date(updatedHoliday.date) }
-            : h
-        )
-      );
+      console.log("Update result:", result);
 
-      setIsEditDialogOpen(false);
+      if (result.success) {
+        // Update the holiday in local state
+        setHolidays(
+          holidays.map((h) =>
+            h._id === selectedHoliday._id
+              ? {
+                  ...h,
+                  name: data.name,
+                  date: new Date(data.date),
+                  isRecurring: data.isRecurring || false,
+                }
+              : h
+          )
+        );
 
-      toast.success("Holiday updated successfully");
+        setIsEditDialogOpen(false);
+        toast.success("Holiday updated successfully");
+      }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      setError(errorMessage);
       toast.error("Failed to update holiday");
-      // handle error
+      console.error("Update holiday error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -208,7 +247,7 @@ const CompanyHolidaysForm = ({
 
 
     try {
-      await deleteCompanyHoliday(selectedHoliday.id);
+      await deleteCompanyHoliday(selectedHoliday._id);
       setIsDeleteDialogOpen(false);
 
       toast.success("Holiday deleted successfully");
@@ -380,7 +419,7 @@ const CompanyHolidaysForm = ({
                   {holidays
                     ?.sort((a, b) => a.date.getTime() - b.date.getTime())
                     ?.map((holiday) => (
-                      <TableRow key={holiday.id}>
+                      <TableRow key={holiday._id}>
                         <TableCell className="font-medium">
                           {holiday.name}
                         </TableCell>

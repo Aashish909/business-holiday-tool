@@ -49,7 +49,7 @@ const AllowancePage = async () => {
                   </TableHeader>
                   <TableBody>
                     {employees.map((employee) => (
-                      <TableRow key={employee._id.toHexString()}>
+                      <TableRow key={employee._id}>
                         <TableCell>
                           {employee.firstName} {employee.lastName}
                         </TableCell>
@@ -61,7 +61,7 @@ const AllowancePage = async () => {
                         <TableCell>{employee.availableDays}</TableCell>
                         <TableCell>
                           <AllowanceForm
-                            employeeId={employee._id.toHexString()}
+                            employeeId={employee._id}
                             employeeName={`${employee.firstName} ${employee.lastName}`}
                             currentAllowance={employee.availableDays}
                           />

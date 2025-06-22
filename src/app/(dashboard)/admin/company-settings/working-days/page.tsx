@@ -32,7 +32,7 @@ const WorkingDaysPage = async () => {
         </Button>
       </div>
       <CompanyWorkingDaysForm
-        initialWorkingDays={company.workingDays}
+        initialWorkingDays={company.workingDays || []}
       />
     </div>
   );

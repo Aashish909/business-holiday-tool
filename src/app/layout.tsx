@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'TimeOffer - Holiday Management Tool',
-  description: 'Manage your company holidays and time-off requests efficiently',
+  title: 'NextLeave - Holiday Management Tool',
+  description: 'A comprehensive holiday management tool for businesses',
 }
 
 export default function RootLayout({
